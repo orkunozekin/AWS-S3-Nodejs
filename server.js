@@ -1,4 +1,5 @@
 const express = require('express')
+var cors = require('cors')
 
 const fs = require('fs')
 const util = require('util')
@@ -11,33 +12,28 @@ const { uploadFile, getFileStream, getAllFilesStream } = require('./s3')
 
 const app = express()
 
-app.get('/images/:key', (req, res) => {
-  console.log("req.params: \n req.params")
+//get a specific image
+app.get('/image/:key', cors({ origin: "*" }), (req, res) => {
   const key = req.params.key
   const readStream = getFileStream(key)
-
   readStream.pipe(res)
 })
 
 //get all images
-app.get('/images/all', (req, res) => {
-  const readStream = getAllFilesStream()
-  readStream.pipe(res)
+app.get('/images/all', cors({ origin: "*" }), (req, res) => {
+  getAllFilesStream(res)
 })
 
-app.post('/images', upload.single('image'), async (req, res) => {
+//post an image
+app.post('/image', upload.single('image'), cors({ origin: "*" }), async (req, res) => {
   const file = req.file
   console.log(file)
-
-  // apply filter
-  // resize 
-
   const result = await uploadFile(file)
   await unlinkFile(file.path)
   console.log(result)
   const description = req.body.description
   console.log("description: ", description);
-  res.send({ imagePath: `/images/${result.Key}` })
+  res.send(result.Key)
 })
 
 app.listen(3535, () => console.log("listening on port 3535"))
